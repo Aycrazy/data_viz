@@ -18,3 +18,5 @@ library('dplyr')
 
 acc2014 <- read_sas('accident.sas7bdat')
 acc2015 <- read_csv('nhtsa_2015_dir/accident.csv')
+
+ls()
