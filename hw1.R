@@ -47,5 +47,18 @@ acc_combine %>% count(RUR_URB)
     
 #There are 30056 NA rows because there are 30,0056 rows in acc2014, which does not have the RUR_URB variable
 
+fips = read_csv('fips.csv')
+
+glimpse(fips)
+
+acc_combine$STATE <- as.character(acc_combine$STATE)
+
+acc_combine$COUNTY <- as.character(acc_combine$COUNTY)
+
+acc_combine <- acc_combine %>% mutate(STATE = str_pad(STATE,width=2,side='left',pad='0'))
+acc_combine <-acc_combine %>% mutate(COUNTY = str_pad(COUNTY,width=3,side='left',pad='0'))
  
- 
+acc_combine <- rename(acc_combine, StateFIPSCode = STATE, CountyFIPSCode = COUNTY)
+
+fips_acc <- left_join(acc_combine,fips)
+
