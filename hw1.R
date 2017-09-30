@@ -62,3 +62,13 @@ acc_combine <- rename(acc_combine, StateFIPSCode = STATE, CountyFIPSCode = COUNT
 
 fips_acc <- left_join(acc_combine,fips)
 
+#It seemed to make more sense to group_by StateFipsCode and YEAR, after discussing this problem
+#with a classmate and reading the directions further, we saw that NA values would be expected
+#and so I then grouped by StateName and Year.
+
+agg <- fips_acc %>%
+        group_by(StateName,YEAR) %>%
+        summarize(TOTAL=sum(FATALS))
+
+agg_wide <- spread(agg, YEAR, TOTAL)
+
