@@ -27,13 +27,10 @@ plot1 + labs(title = "How Age and Race Impact Predict Narcotics Arrest Score", s
 age_list <- unique(ssl$AGE.CURR)
 
 plot2 <- ggplot(data = ssl_wt_drug)+
-    geom_bar(aes(x = narcotics_arr_cnt, fill = age_curr ), position = "dodge") 
-    #coord_flip()#+
-    #scale_alpha_manual(values= c(0.1,0.2,0.3,0.4,0.5,0.6,0.7),labels = age_list[c(1,2,3,4,5,6,7)])
-    
-plot2 + labs(title = "Who Gets Arrested for Drug Posession by Age Range")+ labs(subtitle = "We will take a look at where the Strategic Subject list members got arrested and how old they were at the time",
-             caption = "Source: City of Chicago Data")+ xlab('Age Range of Last Arrest') + ylab('Number of Arrests')
+    geom_bar(aes(x = narcotics_arr_cnt, fill = age_curr ), position = )
 
+plot2 <- plot2 + labs(title = "Who Gets Arrested for Drug Posession by Age Range")+ labs(subtitle = "We will take a look at where the Strategic Subject list members got arrested and how old they were at the time",
+             caption = "Source: City of Chicago Data")+ xlab('Number of Arrests') + ylab('Number of People of Indicated Age with X Arrests')
 
 samhsa <- read_xlsx("bhtf.xlsx")
 
