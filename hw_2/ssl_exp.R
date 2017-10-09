@@ -1,8 +1,5 @@
 setwd('~/Documents/data_viz/')
 library(tidyverse)
-library(readr)
-library(stringr)
-library(dplyr)
 library(readxl)
 library(ggmap)
 library(acs)
@@ -17,11 +14,13 @@ ssl_wt <- ssl %>% filter(!is.na(CENSUS.TRACT)) %>%
 
 ssl_wt_drug <- ssl_wt %>% filter(DRUG.I == 'Y')
 
+
 to_replace = colnames(ssl_wt_drug)
 
 replace_with = gsub("[.]","_",tolower(colnames(ssl_wt_drug)))
 
 ssl_wt_drug <- setnames(ssl_wt_drug, c(to_replace), c(replace_with))
+
 
 plot1 <- ggplot(data = ssl_wt_drug, aes(x = age_curr, y = predictor_rat_narcotic_arrests, color = race_code_cd))+
         geom_boxplot()
@@ -35,8 +34,8 @@ age_list <- unique(ssl$AGE.CURR)
 plot2 <- ggplot(data = ssl_wt_drug)+
     geom_bar(aes(x = narcotics_arr_cnt, fill = age_curr ), position = )
 
-plot2 <- plot2 + labs(title = "Who Gets Arrested for Drug Posession by Age Range")+ labs(subtitle = "We will take a look at where the Strategic Subject list members got arrested and how old they were at the time",
-             caption = "Source: City of Chicago Data")+ xlab('Number of Arrests') + ylab('Number of People of Indicated Age with X Arrests')
+plot2 + labs(title = "Who Gets Arrested for Drug Posession by Age Range")+ labs(subtitle = "We will take a look at where the Strategic Subject list members got arrested and how old they were at the time",
+             plot.caption = "Source: City of Chicago Data")+ xlab('Number of Arrests') + ylab('Number of People of Indicated Age with X Arrests')
 
 samhsa <- read_xlsx("bhtf.xlsx")
 
@@ -51,6 +50,11 @@ samhsa_batch <- within(samhsa_batch,  addresses <- paste(street1, city, state, z
 
 samhsa$addresses <- samhsa_batch$addresses
 
+#to_replace = colnames(ssl_wt_drug)
+
+#replace_with = gsub("[.]","_",tolower(colnames(ssl_wt_drug)))
+
+#ssl_wt_drug <- setnames(ssl_wt_drug, c(to_replace), c(replace_with))
 
 samhsa_geocoded <- rename(read_csv('GeocodedResults.csv'), addresses = address)
 
@@ -79,7 +83,7 @@ plot3 = ggplot(data = samhsa_ssl, aes(x = community_area, y = total, color = cen
     geom_point(data = samhsa_ssl_no_na, aes( x = community_area, y = total), shape = 23, fill = "red", show.legend = FALSE)+
     theme(axis.text.x = element_text(angle = 90, hjust = 1))
 
-plot3 + labs(title = "Narcotics Arrests by Community Area, and Facilities... Where are they?", subtitle = "Each bubble represents a census tract and the number of drug arrests that occcurred inside them.  There is one unique point that represents where there is any overlap between where narcots arrests occurr and where a mental health or substance use treatment facility, or Bupenaphren treatment provider is present",
+plot3 + labs(title = "Narcotics Arrests by Community Area, and Facilities... Where are they?", subtitle = "Each bubble represents a census tract and the number of drug arrests that occcurred\n inside them.  There is one unique point that represents where there is any overlap between where narcotics\n arrests occurr and where a mental health or substance use treatment facility, or Bupenaphren treatment\n provider is present",
              caption = "Source: City of Chicago Data") + ylab('Number of Arrests') + xlab('Community Area')
     
 
