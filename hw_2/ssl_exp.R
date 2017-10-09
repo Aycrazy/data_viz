@@ -17,6 +17,12 @@ ssl_wt <- ssl %>% filter(!is.na(CENSUS.TRACT)) %>%
 
 ssl_wt_drug <- ssl_wt %>% filter(DRUG.I == 'Y')
 
+to_replace = colnames(ssl_wt_drug)
+
+replace_with = gsub("[.]","_",tolower(colnames(ssl_wt_drug)))
+
+ssl_wt_drug <- setnames(ssl_wt_drug, c(to_replace), c(replace_with))
+
 plot1 <- ggplot(data = ssl_wt_drug, aes(x = age_curr, y = predictor_rat_narcotic_arrests, color = race_code_cd))+
         geom_boxplot()
 
@@ -45,11 +51,6 @@ samhsa_batch <- within(samhsa_batch,  addresses <- paste(street1, city, state, z
 
 samhsa$addresses <- samhsa_batch$addresses
 
-to_replace = colnames(ssl_wt_drug)
-
-replace_with = gsub("[.]","_",tolower(colnames(ssl_wt_drug)))
-
-ssl_wt_drug <- setnames(ssl_wt_drug, c(to_replace), c(replace_with))
 
 samhsa_geocoded <- rename(read_csv('GeocodedResults.csv'), addresses = address)
 
