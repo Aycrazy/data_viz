@@ -26,7 +26,7 @@ plot1 <- ggplot(data = ssl_wt_drug, aes(x = age_curr, y = predictor_rat_narcotic
         geom_boxplot()
 
 plot1 + labs(title = "How Age and Race Impact Predict Narcotics Arrest Score", subtitle = "We will take a look at how age and race impact predicted narcotics arrest score",
-             caption = "Source: City of Chicago Data") + ylab('Predicted Number of Narcotics Arrests') + xlab('Age Range of Last Arrest')
+             caption = "Source: City of Chicago Data", color = 'Race Code') + ylab('Predicted Number of Narcotics Arrests') + xlab('Age Range of Last Arrest')
 
 
 age_list <- unique(ssl$AGE.CURR)
@@ -35,7 +35,7 @@ plot2 <- ggplot(data = ssl_wt_drug)+
     geom_bar(aes(x = narcotics_arr_cnt, fill = age_curr ), position = )
 
 plot2 + labs(title = "Who Gets Arrested for Drug Posession by Age Range")+ labs(subtitle = "We will take a look at where the Strategic Subject list members got arrested and how old they were at the time",
-             plot.caption = "Source: City of Chicago Data")+ xlab('Number of Arrests') + ylab('Number of People of Indicated Age with X Arrests')
+             plot.caption = "Source: City of Chicago Data", fill = 'Age Range')+ xlab('Number of Arrests') + ylab('Number of People of Indicated Age with X Arrests')
 
 samhsa <- read_xlsx("bhtf.xlsx")
 
