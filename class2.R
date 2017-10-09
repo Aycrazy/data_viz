@@ -73,3 +73,17 @@ drug_lim <- drugs %>%
         filter(CIGEVER == "Yes")
 
 drug_lim
+
+name <<- function(a,b){ a+b}
+
+#::  <-- reference a package without loading it
+# package::function()
+
+#indexing with square brackets mtcars[5,1;3]
+
+#newer function argument from the most recently loaded package will supercede the other
+
+#factor 
+    #levels = "all of the possible values"
+
+#table frequency table

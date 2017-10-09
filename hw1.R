@@ -70,5 +70,18 @@ agg <- fips_acc %>%
         group_by(StateName,YEAR) %>%
         summarize(TOTAL=sum(FATALS))
 
-agg_wide <- spread(agg, YEAR, TOTAL)
+agg_wide <- data.frame(spread(agg, YEAR, TOTAL))
+
+agg_wide <- rename(agg_wide, fifteen = X2015, fourteen = X2014)
+
+# I think normally percent difference would be calculated with by 2015-2014/2015 not 2015-2014/2014
+#which is what I have below (but it matches the provided answer)
+
+agg <- agg_wide %>% 
+    mutate(perc_diff = ((fifteen-fourteen)/fourteen)*100) %>%
+    arrange(perc_diff) %>%
+    filter(perc_diff > 15) %>%
+    filter(!is.na(StateName))
+
+glimpse(agg)
 
