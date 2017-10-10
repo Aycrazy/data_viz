@@ -78,12 +78,18 @@ ssl_wt_drug_by_ct_lim <- samhsa_ssl %>% filter(total > 200)
 #    geom_point(data = samhsa_ssl_no_na, aes( x = community_area, y = total), color = "red")+
 #    theme(axis.text.x = element_text(angle = 90, hjust = 1))
 
-plot3 = ggplot(data = samhsa_ssl, aes(x = community_area, y = total, color = census_tract))+
-    geom_count(shape = 21, show.legend = FALSE)+
+plot3 = ggplot(data = samhsa_ssl_sorted, aes(x = community_area, y = total))+
+    geom_count(shape = 21, show.legend = FALSE, color = 'blue')+
     geom_point(data = samhsa_ssl_no_na, aes( x = community_area, y = total), shape = 23, fill = "red", show.legend = FALSE)+
-    theme(axis.text.x = element_text(angle = 90, hjust = 1))
+    theme(axis.text.x = element_text(angle = 90, hjust = 1))#+
+    #scale_x_discrete(limits=sort(order(as.integer(samhsa_ssl$latitude))))
 
 plot3 + labs(title = "Narcotics Arrests by Community Area, and Facilities... Where are they?", subtitle = "Each bubble represents a census tract and the number of drug arrests that occcurred\n inside them.  There is one unique point that represents where there is any overlap between where narcotics\n arrests occurr and where a mental health or substance use treatment facility, or Bupenaphren treatment\n provider is present",
              caption = "Source: City of Chicago Data") + ylab('Number of Arrests') + xlab('Community Area')
     
+unique(ssl$latest_date)
+
+colnames(samhsa_ssl)
+
+samhsa_ssl_sorted <- samhsa_ssl[order(samhsa_ssl$latitude),]
 
