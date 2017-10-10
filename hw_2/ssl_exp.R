@@ -79,7 +79,7 @@ ssl_wt_drug_by_ct_lim <- samhsa_ssl %>% filter(total > 200)
 #    theme(axis.text.x = element_text(angle = 90, hjust = 1))
 
 plot3 = ggplot(data = samhsa_ssl_sorted, aes(x = community_area, y = total))+
-    geom_count(shape = 21, show.legend = FALSE, color = 'blue')+
+    geom_point(shape = 21, show.legend = FALSE, color = 'blue')+
     geom_point(data = samhsa_ssl_no_na, aes( x = community_area, y = total), shape = 23, fill = "red", show.legend = FALSE)+
     theme(axis.text.x = element_text(angle = 90, hjust = 1))#+
     #scale_x_discrete(limits=sort(order(as.integer(samhsa_ssl$latitude))))
