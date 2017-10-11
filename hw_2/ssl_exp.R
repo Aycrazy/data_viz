@@ -84,7 +84,7 @@ plot3 = ggplot(data = samhsa_ssl_sorted, aes(x = reorder(community_area, order(l
     theme(axis.text.x = element_text(angle = 90, hjust = 1))+
     coord_flip()
 
-plot3 + labs(title = "Narcotics Arrests by Community Area, and Facilities... Where are they?", subtitle = "Community areas north to south, where each bubble represents a census tract and the number of drug arrests that occcurred\n inside them.  There is one unique point that represents where there is any overlap between where narcotics\n arrests occurr and where a mental health or substance use treatment facility, or Bupenaphren treatment\n provider is present",
+plot3 + labs(title = "Narcotics Arrests by Community Area, and Facilities... Where are they?", subtitle = "Community areas north to south, where each bubble represents a census tract and the\n number of drug arrests that occcurred inside them.  There is one unique point that\n represents where there is any overlap between where narcotics arrests occurr and\n where a mental health or substance use treatment facility, or\n Bupenaphren treatment provider is present",
              caption = "Source: City of Chicago Data") + ylab('Number of Arrests') + xlab('Community Area')
     
 unique(ssl$latest_date)
