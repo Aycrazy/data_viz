@@ -1,0 +1,298 @@
+---
+title: "DV_Assignment3"
+author: "Andrew Yaspan"
+date: "10/15/2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Project Introduction
+
+The objective for this class is to conduct a thoughtful exploration of available data (in my case, public use files about the Affordable Care Act {ACA} Health Insurance Marketplace) and produce meaningful displays that impart useful insights.  In order to make the most of detail of the data I have, I wanted to reduce the scope of the data I had available.  Therefore, I am limiting myself to using data for the states surrounding Lake Michigan, Illinois, Wisconsin, Indiana, and Michigan.
+
+While my main goal is to learn about and compare the health insurance plan offerings in these 4 states, I would also like to investigate the coverage of particular services.  One set of services that relies heavily on the portion of the ACA that written to improve coverage and address complex public health issues is coverage of mental health and subastance use services.  Out of full transparency, I also wanted to include this plot to make a visual that could eventually contribute to my original project plan of focusing on local access to mental health and substance use treatment facilities:
+
+```{r fig.width = 7, fig.height=6}
+#plot1
+library('readr')
+library('haven')
+library('tidyr')
+library('stringr')
+library('ggplot2')
+library('dplyr')
+library(tidyverse)
+library(readxl)
+library(RSocrata)
+library(data.table)
+
+setwd('~/Documents/data_viz/health_insurance_marketplace/')
+
+benifits <- read_csv('Benefits_Cost_Sharing_PUF.csv')
+
+rates<- read_csv('Rate_PUF.csv')
+
+service_area <- read_csv('ServiceArea_PUF.csv')
+
+plan_attributes <- read_csv('Plan_Attributes_PUF.CSV')
+
+cross_walk <- read_csv('plan-id-crosswalk-puf.CSV')
+
+network <- read_csv("Network_PUF.csv")
+
+b_rules <- read_csv('Business_Rules_PUF_Reformat.csv')
+
+aptc<- read_xlsx('County_Level_Demographics_2016.xlsx', sheet='APTC', skip = 2)
+
+csr<- read_xlsx('County_Level_Demographics_2016.xlsx', sheet='CSR', skip = 2)
+
+consumer_type <- read_xlsx('County_Level_Demographics_2016.xlsx', sheet='Consumer Type', skip = 2)
+
+hh_income <- read_xlsx('County_Level_Demographics_2016.xlsx', sheet='Household Income', skip = 2)
+
+race <- read_xlsx('County_Level_Demographics_2016.xlsx', sheet='Race', skip = 2)
+
+age_group <- read_xlsx('County_Level_Demographics_2016.xlsx', sheet='Age Group', skip = 2)
+
+to_replace = colnames(hh_income)
+
+replace_with = gsub(" ","_",tolower(colnames(hh_income)))
+
+hh_income <- setnames(hh_income, c(to_replace), c(replace_with))
+
+#^loop for other datasets?
+dframeslist <- list(age_group, aptc, b_rules, benifits,
+                 consumer_type, cross_walk, csr, hh_income,
+                 plan_attributes, network, race, rates, service_area)
+
+ldframes <- lapply(dframeslist,function(d){ 
+    to_replace = colnames(d)
+    replace_with = gsub(" ","_",tolower(colnames(d)))
+    d <-setnames(d, c(to_replace), c(replace_with))
+    })
+
+hh_income <- hh_income %>% filter(state_name %in% c('MI','WI','IL','IN'))
+race <- race %>% filter(state_name %in% c('MI','WI','IL','IN'))
+consumer_type <- consumer_type %>% filter(state_name %in% c('MI','WI','IL','IN'))
+csr <- csr %>% filter(state_name %in% c('MI','WI','IL','IN'))
+aptc <- aptc %>% filter(state_name %in% c('MI','WI','IL','IN'))
+b_rules <- b_rules %>% filter(statecode %in% c('MI','WI','IL','IN'))
+network <- network %>% filter(statecode %in% c('MI','WI','IL','IN'))
+cross_walk <- cross_walk %>% filter(state %in% c('MI','WI','IL','IN'))
+rates <- rates %>% filter(statecode %in% c('MI','WI','IL','IN'))
+age_group <- age_group %>% filter(state_name %in% c('MI','WI','IL','IN'))
+plan_attributes <- plan_attributes %>% filter(statecode %in% c('MI','WI','IL','IN'))
+service_area <- service_area %>% filter(statecode %in% c('MI','WI','IL','IN'))
+benifits <- benifits %>% filter(statecode %in% c('MI','WI','IL','IN'))
+
+#list2env(ldframes, envir=.GlobalEnv)
+
+#exploration of health plans in the 4 states with mental health and substance use benifits
+mh_benifit_names = c(unique(benifits[grep("Mental|Substance", benifits$benefitname),]$benefitname))
+mh_benifit_pids = c(unique(benifits[grep("Mental|Substance", benifits$benefitname),]$planid))
+mh_benifit_states = c(unique(benifits[grep("Mental|Substance", benifits$benefitname),]$statecode))
+#which plans offer to individuals only in what counties in comparison with countys with more families
+
+colScale <- scale_colour_manual(name = "grp",values = myColors)
+
+#plot1
+benifits %>%
+    filter(benefitname %in% mh_benifit_names) %>%
+    ggplot(aes(x = benefitname, fill = statecode, color = isstatemandate))+
+        geom_bar( position = "dodge")+
+    theme(axis.text.x = element_text(angle = 90))+
+    scale_color_manual(values =  c("Yes" = "#000000"))+
+    coord_flip()+
+    labs(title = "Mental Health and Substance Use Health Benefits by State",
+         subtitle = "This plot displays the number of plans offering mental health\n and substance use beneifts and whether or not the indicated\n benefit is mandated by the state.",
+         fill = "State Abreviation", color = "Mandated", y ='Number of Plans', x = 'Benifits' )
+    
+library("RSocrata")
+
+csr_2015 <- read.socrata(
+    "https://data.cms.gov/resource/us4s-qbb3.json",
+    app_token = 'tBydhQErvlkNXKA2PsFJsJ6kR',
+    email     = "ayaspan@uchicago.edu",
+    password  = "Metjetk5689!")
+#do facet grid and facet wrap
+
+csr_2015 <- csr_2015 %>%
+        mutate(no_csr = as.numeric(no_csr),
+               yes_csr = as.numeric(yes_csr),
+               total_plan_selections = as.numeric(total_plan_selections),
+               year = '2015')
+
+csr <- csr %>%
+    mutate(no_csr = as.numeric(no_csr),
+           yes_csr = as.numeric(yes_csr),
+           total_plan_selections = as.numeric(total_plan_selections),
+           year = '2016')
+
+csr_2015 <- rename(csr_2015, state_name = state)
+
+csr_2015 <- csr_2015 %>% filter(state_name %in% c('MI','WI','IL','IN'))
+
+csr_diff <- csr %>% left_join(csr_2015, by = c('state_name', 'county_name'))
+benifits %>%
+    filter(benefitname %in% mh_benifit_names) %>%
+    ggplot(aes(x = benefitname, fill = statecode, color = isstatemandate))+
+        geom_bar( position = "dodge")+
+    theme(axis.text.x = element_text(angle = 90))+
+    scale_color_manual(values =  c("Yes" = "#000000"))+
+    coord_flip()+
+    labs(title = "Mental Health and Substance Use Health Benefits by State",
+         subtitle = "This plot displays the number of plans offering mental health\n and substance use beneifts and whether or not the indicated\n benefit is mandated by the state.",
+         fill = "State Abreviation", color = "Mandated", y ='Number of Plans', x = 'Benifits', caption = 'Source: Center for Medicare & Medicaid Services' )
+    
+```
+
+## Focus on Plan Comparison
+
+To begin my concentration on comparing health insurance plan enrollment.  This plot focuses specifically on the largest counties and plan enrollment from 2015 to 2016. I made several plots that included every county in each state, and then plots that focused on the mid-to-small sized counties of each state that demonstrated that there were several counties that reduced enrollment among many that gained enrollment.  I included this plot of the largest counties in each state because I thought it demonstrates how large portions of each state's population have behaved with fewer data points than show all the mid-to-small sized counties' data points:
+
+```{r fig.width = 7, fig.height=6}
+#plot 2
+
+largest_counties_text <- rbind(csr) %>%
+    filter(log(total_plan_selections) > 9 &log(total_plan_selections) <= 12.5)%>%
+    select(year, county_name, state_name, total_plan_selections) %>%
+    mutate(county_name =str_pad(county_name,width=18,side='left',pad=' ')) %>%
+    mutate(county_name = paste(county_name,', ',state_name))
+
+largest_plot <- rbind(csr_2015,csr) %>%
+    filter(log(total_plan_selections) > 9 &log(total_plan_selections) <= 12.5) %>%
+    mutate(county_name = paste(county_name,', ',state_name)) %>%
+    ggplot(aes(x = year, y = log(total_plan_selections)))+
+    geom_point(aes(color = total_plan_selections), size = 3)+
+    geom_line(aes(x = year, group = county_name, y = log(total_plan_selections)))+
+    geom_text(data = largest_counties_text, aes(x = year, label = county_name, y = log(total_plan_selections)),
+              size = 3,  hjust = 0, check_overlap = TRUE)+
+    ylim(8, 13)+
+    scale_colour_gradientn(colours = terrain.colors(10))+
+    theme(axis.text = element_blank(),
+          axis.ticks = element_blank(),
+          panel.grid  = element_blank(),panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+          panel.background = element_blank()) + labs(title = "Largest Counties in Lake Michigan States Use of Cost Sharing Benifits",
+                                                     subtitle = "This plot displays the number of consumers who were awarded and used cost sharing benifits for their\n health insurance plan",
+                                                     color = "Plans Selected", y = element_blank(), x = 'Year', caption = 'Source: CMS' )
+
+largest_plot
+```
+
+Next, I wanted to take a look at how many people of different income levels were purchasing health insurance in each state and receiving cost sharing benifits.  This particular topic is highly relevant, since the president signed an executive order that would end payments to health insurance companies, which makes the cost sharing possible.  Prior to this, Congress appealed to the Federal court system that the payments were unlawful.  A federal court agreed with the claim, and now the case is pending a hearing with the D.C. Circuit Court of Appeals.  As of now, payments for cost sharing will end in January.  This is grounds for insurers to back out of contracts made with the federal government, which could lead to health insurance premium hikes making insurance unaffordable to millions of Americans.
+
+'''
+```{r fig.width = 7, fig.height=6}
+#plot3
+
+hh_income[hh_income=="."]<- 0
+
+levels = colnames(hh_income)[5:12]
+
+income_for_melt <- hh_income %>%
+    setnames(c(4:11), c('level_1_perc', 'level_2_perc',
+               'level_3_perc','level_4_perc','level_5_perc', 'level_6_perc',
+               'level_7_perc', 'level_8_perc')) %>%
+    mutate_at(.vars = c('level_1_perc', 'level_2_perc',
+                     'level_3_perc','level_4_perc','level_5_perc', 'level_6_perc',
+                     'level_7_perc', 'level_8_perc', 'total_plan_selections'), funs(as.integer)) #%>%
+    group_by(state_name) %>%
+    summarize_at(.vars = c('level_1_perc', 'level_2_perc',
+                           'level_3_perc','level_4_perc','level_5_perc', 'level_6_perc',
+                           'level_7_perc', 'level_8_perc', 'total_plan_selections'), .funs = funs(sum)) %>%
+    mutate_at( .vars = c('level_1_perc', 'level_2_perc',
+                         'level_3_perc','level_4_perc','level_5_perc', 'level_6_perc',
+                         'level_7_perc', 'level_8_perc'), funs((./total_plan_selections)*100))
+    
+
+income_plot_ready <- income_for_melt %>%
+    left_join(income_plot, income_plot, by = c("state_name", "county_name")) %>%
+    melt( id.vars = c(1:14, 23,24)) %>%
+    rename(income_range = variable) %>%
+    group_by(state_name, income_range) %>%
+    summarize_at(.vars = c('level_1_perc.x', 'level_2_perc.x',
+                           'level_3_perc.x','level_4_perc.x','level_5_perc.x', 'level_6_perc.x',
+                           'level_7_perc.x', 'level_8_perc.x', 'total_plan_selections.x'), .funs = funs(sum)) %>%
+    mutate_at( .vars = c('level_1_perc.x', 'level_2_perc.x',
+                         'level_3_perc.x','level_4_perc.x','level_5_perc.x', 'level_6_perc.x',
+                         'level_7_perc.x', 'level_8_perc.x'), funs((./total_plan_selections.x)*100)) #%>%
+    #group_by(state_name, income_range) %>%
+    summarize_at(.vars = c('level_1_perc.x', 'level_2_perc.x',
+                           'level_3_perc.x','level_4_perc.x','level_5_perc.x', 'level_6_perc.x',
+                           'level_7_perc.x', 'level_8_perc.x', 'total_plan_selections.x'), .funs = funs(sum))
+
+
+income_plot2 <- ggplot(position = identity)+
+    geom_bar(data = filter(income_plot_ready,income_range == 'level_1_perc.y'),
+               aes(x = levels[1], y = level_1_perc.x, fill = state_name), position = 'dodge' , size = 3, alpha = .8, stat = 'identity')+
+    geom_bar(data = filter(income_plot_ready,income_range == 'level_2_perc.y'),
+               aes(x = levels[2], y = level_2_perc.x, fill = state_name), position = 'dodge', size = 3, alpha = .8,  stat = 'identity') +
+    geom_bar(data = filter(income_plot_ready, income_range == 'level_3_perc.y'),
+               aes(x = levels[3], y = level_3_perc.x, fill = state_name) , position = 'dodge',size = 3, alpha = .8,  stat = 'identity')+
+    geom_bar(data = filter(income_plot_ready, income_range == 'level_4_perc.y'),
+               aes(x = levels[4], y = level_4_perc.x, fill = state_name), position = 'dodge' ,size = 3, alpha = .8,  stat = 'identity')+
+    geom_bar(data = filter(income_plot_ready, income_range == 'level_5_perc.y'),
+               aes(x = levels[5],y = level_5_perc.x, fill = state_name), position= 'dodge', size = 3, alpha = .8,  stat = 'identity')+
+    geom_bar(data = filter(income_plot_ready, income_range == 'level_6_perc.y'),
+               aes(x = levels[6], y = level_6_perc.x, fill = state_name), position= 'dodge', size = 3, alpha = .8,  stat = 'identity')+
+    geom_bar(data = filter(income_plot_ready, income_range == 'level_7_perc.y'),
+               aes(x = levels[7], y = level_7_perc.x, fill = state_name), position = 'dodge', size = 3, alpha = .8,  stat = 'identity')+
+    geom_bar(data = filter(income_plot_ready, income_range == 'level_8_perc.y'),
+               aes(x = levels[8],y = level_8_perc.x, fill = state_name),
+             position = 'dodge',  size = 3, alpha = .8, stat = 'identity')+
+    labs(title = "Percentage of Health Insurance Plans Selected based on Income Level",
+         subtitle = "This plot displays the number of consumers who selected insurance plans through the marketplace and their income range",
+         color = "State Abbreviation", x = 'Income Level', y = 'Percentage of Plans Bought By People at Income Level', caption = 'Source: CMS' )+
+    theme(axis.text.x = element_text(angle = 90))
+
+income_plot2
+```
+
+A well known fact about health insurance is that health insurance companeis are allowed to raise premiums for customers as they age.  The curve in the following plots demonstrates nothing particularly exciting regarding that fact.  What is interesting is how platinum plans are either not recorded to be available or are unavailable in Illinois and Indiana or are not offered at all.  Another interesting insight is that premium increases are not exactly the same by state. Silver plans are significantly more expensive for older Americans in Wisconsin than the other three states.
+
+```{r fig.width = 7, fig.height=6}
+
+individual_option <- rates %>%
+    filter(age != 'Family Option' & individualrate < "9000") %>%
+    select(c(1:16)) %>%
+    mutate(planid = as.character(planid),
+           planid = substr(planid, 1, 14))
+
+benifits_option <- plan_attributes %>%
+    mutate(planid = substr(planid, 1, 14),
+           tehbinntier1individualmoop = gsub(",", "",tehbinntier1individualmoop),
+           tehbinntier1individualmoop = gsub("\\$", "",tehbinntier1individualmoop),
+           tehbinntier1individualmoop = as.numeric(tehbinntier1individualmoop),
+           tehbinntier2individualmoop = gsub(",", "",tehbinntier2individualmoop),
+           tehbinntier2individualmoop = gsub("\\$", "",tehbinntier2individualmoop),
+           tehbinntier2individualmoop = as.numeric(tehbinntier2individualmoop),
+           tehboutofnetindividualmoop = gsub(",", "",tehboutofnetindividualmoop),
+           tehboutofnetindividualmoop = gsub("\\$", "",tehboutofnetindividualmoop),
+           tehboutofnetindividualmoop = as.numeric(tehboutofnetindividualmoop)) %>%
+    group_by(planid, metallevel) %>%
+    summarise(innettier1moop=mean(tehbinntier1individualmoop),
+              innettier2moop=mean(tehbinntier2individualmoop),
+              outnetmoop=mean(tehboutofnetindividualmoop))
+
+planrates <- inner_join(individual_option, benifits_option, by="planid")
+
+planrates %>%
+    select(age, metallevel, individualrate, statecode) %>%
+    group_by(age, metallevel,statecode) %>%
+    summarize(meanindrate= mean(individualrate),
+              medianindrate = median(individualrate)) %>%
+    arrange(desc(meanindrate))%>%
+    ggplot( aes(x=age, y=meanindrate))+
+    geom_point(stat='identity', size = 1.5, aes(color = factor(metallevel)))+
+    ggtitle("Average Monthly Premium by Age")+
+    labs(subtitle = 'By State in 2016', x="Age", y="Average Premium by Coverage", color = 'Metal Level',
+         caption = 'Source: CMS')+
+    facet_wrap(~statecode)+
+    theme(axis.text.x = element_text(angle = 90, hjust = 1), axis.ticks.x = element_text(size = ))
+
+```
+
+
+1: "https://www.washingtonpost.com/politics/white-house-tells-court-it-is-immediately-stopping-aca-cost-sharing-subsidies/2017/10/13/4c404234-b01d-11e7-be94-fabb0f1e9ffb_story.html?utm_term=.4dc8ef8a9bdf"
