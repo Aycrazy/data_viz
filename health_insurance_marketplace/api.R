@@ -1,0 +1,7 @@
+CMS_PASSWORD = "Metjetk5689!"
+CMS_API = 'tBydhQErvlkNXKA2PsFJsJ6kR'
+
+CENSUS_API = "0df2dc093a7c9725d57da5d61d315f3549fc6841"
+
+
+

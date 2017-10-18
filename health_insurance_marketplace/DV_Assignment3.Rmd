@@ -1,8 +1,10 @@
 ---
-title: "DV_Assignment3"
+title: "Exploratory Short Paper"
 author: "Andrew Yaspan"
 date: "10/15/2017"
-output: html_document
+output:
+  html_document: default
+  pdf_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -13,9 +15,11 @@ knitr::opts_chunk$set(echo = TRUE)
 
 The objective for this class is to conduct a thoughtful exploration of available data (in my case, public use files about the Affordable Care Act {ACA} Health Insurance Marketplace) and produce meaningful displays that impart useful insights.  In order to make the most of detail of the data I have, I wanted to reduce the scope of the data I had available.  Therefore, I am limiting myself to using data for the states surrounding Lake Michigan, Illinois, Wisconsin, Indiana, and Michigan.
 
-While my main goal is to learn about and compare the health insurance plan offerings in these 4 states, I would also like to investigate the coverage of particular services.  One set of services that relies heavily on the portion of the ACA that written to improve coverage and address complex public health issues is coverage of mental health and subastance use services.  Out of full transparency, I also wanted to include this plot to make a visual that could eventually contribute to my original project plan of focusing on local access to mental health and substance use treatment facilities:
+<P style="page-break-before: always">
 
-```{r fig.width = 7, fig.height=6}
+While my main goal is to learn about and compare the health insurance plan offerings in these 4 states, I would also like to investigate the coverage of particular services.  One set of services that relies heavily on the portion of the ACA that written to improve coverage and address complex public health issues is coverage of mental health and substance use services.  Out of full transparency, I also wanted to include this plot to make a visual that could eventually contribute to my original project plan of focusing on local access to mental health and substance use treatment facilities:
+
+```{r fig.width = 7, fig.height=6, echo=FALSE, message=FALSE, warning = FALSE}
 #plot1
 library('readr')
 library('haven')
@@ -89,6 +93,7 @@ benifits <- benifits %>% filter(statecode %in% c('MI','WI','IL','IN'))
 
 #list2env(ldframes, envir=.GlobalEnv)
 
+benifits$benefitname[grep("Mental Health - Other", benifits$benefitname)] = 'Mental Health Other'
 #exploration of health plans in the 4 states with mental health and substance use benifits
 mh_benifit_names = c(unique(benifits[grep("Mental|Substance", benifits$benefitname),]$benefitname))
 mh_benifit_pids = c(unique(benifits[grep("Mental|Substance", benifits$benefitname),]$planid))
@@ -97,18 +102,28 @@ mh_benifit_states = c(unique(benifits[grep("Mental|Substance", benifits$benefitn
 
 colScale <- scale_colour_manual(name = "grp",values = myColors)
 
+
 #plot1
 benifits %>%
-    filter(benefitname %in% mh_benifit_names) %>%
+    filter(benefitname %in% mh_benifit_names & !is.na(benefitname)) %>%
     ggplot(aes(x = benefitname, fill = statecode, color = isstatemandate))+
-        geom_bar( position = "dodge")+
+        geom_bar()+
     theme(axis.text.x = element_text(angle = 90))+
     scale_color_manual(values =  c("Yes" = "#000000"))+
     coord_flip()+
     labs(title = "Mental Health and Substance Use Health Benefits by State",
          subtitle = "This plot displays the number of plans offering mental health\n and substance use beneifts and whether or not the indicated\n benefit is mandated by the state.",
-         fill = "State Abreviation", color = "Mandated", y ='Number of Plans', x = 'Benifits' )
+         fill = "State Abreviation", color = "Mandated", y ='Number of Plans', x = 'Benifits', caption = 'Source: CMS Health Insurance Public Use Files')
+
     
+```
+<P style="page-break-before: always">
+## Focus on Plan Comparison
+
+To begin my concentration on comparing health insurance plan enrollment.  This plot focuses specifically on the largest counties and plan enrollment from 2015 to 2016. I made several plots that included every county in each state, and then plots that focused on the mid-to-small sized counties of each state that demonstrated that there were several counties that reduced enrollment among many that gained enrollment.  I included this plot of the largest counties in each state because I thought it demonstrates how large portions of each state's population have behaved with fewer data points than show all the mid-to-small sized counties' data points:
+
+```{r fig.width = 7, fig.height=6, echo=FALSE, message=FALSE, warning = FALSE}
+#plot 2
 library("RSocrata")
 
 csr_2015 <- read.socrata(
@@ -135,25 +150,6 @@ csr_2015 <- rename(csr_2015, state_name = state)
 csr_2015 <- csr_2015 %>% filter(state_name %in% c('MI','WI','IL','IN'))
 
 csr_diff <- csr %>% left_join(csr_2015, by = c('state_name', 'county_name'))
-benifits %>%
-    filter(benefitname %in% mh_benifit_names) %>%
-    ggplot(aes(x = benefitname, fill = statecode, color = isstatemandate))+
-        geom_bar( position = "dodge")+
-    theme(axis.text.x = element_text(angle = 90))+
-    scale_color_manual(values =  c("Yes" = "#000000"))+
-    coord_flip()+
-    labs(title = "Mental Health and Substance Use Health Benefits by State",
-         subtitle = "This plot displays the number of plans offering mental health\n and substance use beneifts and whether or not the indicated\n benefit is mandated by the state.",
-         fill = "State Abreviation", color = "Mandated", y ='Number of Plans', x = 'Benifits', caption = 'Source: Center for Medicare & Medicaid Services' )
-    
-```
-
-## Focus on Plan Comparison
-
-To begin my concentration on comparing health insurance plan enrollment.  This plot focuses specifically on the largest counties and plan enrollment from 2015 to 2016. I made several plots that included every county in each state, and then plots that focused on the mid-to-small sized counties of each state that demonstrated that there were several counties that reduced enrollment among many that gained enrollment.  I included this plot of the largest counties in each state because I thought it demonstrates how large portions of each state's population have behaved with fewer data points than show all the mid-to-small sized counties' data points:
-
-```{r fig.width = 7, fig.height=6}
-#plot 2
 
 largest_counties_text <- rbind(csr) %>%
     filter(log(total_plan_selections) > 9 &log(total_plan_selections) <= 12.5)%>%
@@ -171,20 +167,21 @@ largest_plot <- rbind(csr_2015,csr) %>%
               size = 3,  hjust = 0, check_overlap = TRUE)+
     ylim(8, 13)+
     scale_colour_gradientn(colours = terrain.colors(10))+
-    theme(axis.text = element_blank(),
-          axis.ticks = element_blank(),
+    theme(axis.text.y = element_blank(),
+          axis.ticks.y = element_blank(),
           panel.grid  = element_blank(),panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
           panel.background = element_blank()) + labs(title = "Largest Counties in Lake Michigan States Use of Cost Sharing Benifits",
                                                      subtitle = "This plot displays the number of consumers who were awarded and used cost sharing benifits for their\n health insurance plan",
-                                                     color = "Plans Selected", y = element_blank(), x = 'Year', caption = 'Source: CMS' )
+                                                     color = "Plans Selected", y = element_blank(), x = 'Year', caption = 'Source: CMS Health Insurance Public Use Files' )
 
 largest_plot
 ```
-
-Next, I wanted to take a look at how many people of different income levels were purchasing health insurance in each state and receiving cost sharing benifits.  This particular topic is highly relevant, since the president signed an executive order that would end payments to health insurance companies, which makes the cost sharing possible.  Prior to this, Congress appealed to the Federal court system that the payments were unlawful.  A federal court agreed with the claim, and now the case is pending a hearing with the D.C. Circuit Court of Appeals.  As of now, payments for cost sharing will end in January.  This is grounds for insurers to back out of contracts made with the federal government, which could lead to health insurance premium hikes making insurance unaffordable to millions of Americans.
+<P style="page-break-before: always">
+##A Cornerstone of the ACA, Cost Sharing
+Next, I wanted to take a look at how many people of different income levels were purchasing health insurance in each state and receiving cost sharing benefits.  This particular topic is highly relevant, since the president signed an executive order that would end payments to health insurance companies, which makes the cost sharing possible.  Prior to this, Congress appealed to the Federal court system that the payments were unlawful.  A federal court agreed with the claim, and now the case is pending a hearing with the D.C. Circuit Court of Appeals.  As of now, payments for cost sharing will end in January.  This is grounds for insurers to back out of contracts made with the federal government, which could lead to health insurance premium hikes making insurance unaffordable to millions of Americans.
 
 '''
-```{r fig.width = 7, fig.height=6}
+```{r fig.width = 7, fig.height=5, echo=FALSE, message=FALSE, warning = FALSE}
 #plot3
 
 hh_income[hh_income=="."]<- 0
@@ -197,18 +194,10 @@ income_for_melt <- hh_income %>%
                'level_7_perc', 'level_8_perc')) %>%
     mutate_at(.vars = c('level_1_perc', 'level_2_perc',
                      'level_3_perc','level_4_perc','level_5_perc', 'level_6_perc',
-                     'level_7_perc', 'level_8_perc', 'total_plan_selections'), funs(as.integer)) #%>%
-    group_by(state_name) %>%
-    summarize_at(.vars = c('level_1_perc', 'level_2_perc',
-                           'level_3_perc','level_4_perc','level_5_perc', 'level_6_perc',
-                           'level_7_perc', 'level_8_perc', 'total_plan_selections'), .funs = funs(sum)) %>%
-    mutate_at( .vars = c('level_1_perc', 'level_2_perc',
-                         'level_3_perc','level_4_perc','level_5_perc', 'level_6_perc',
-                         'level_7_perc', 'level_8_perc'), funs((./total_plan_selections)*100))
-    
+                     'level_7_perc', 'level_8_perc', 'total_plan_selections'), funs(as.integer))
 
 income_plot_ready <- income_for_melt %>%
-    left_join(income_plot, income_plot, by = c("state_name", "county_name")) %>%
+    left_join(income_for_melt, income_for_melt, by = c("state_name", "county_name")) %>%
     melt( id.vars = c(1:14, 23,24)) %>%
     rename(income_range = variable) %>%
     group_by(state_name, income_range) %>%
@@ -217,11 +206,7 @@ income_plot_ready <- income_for_melt %>%
                            'level_7_perc.x', 'level_8_perc.x', 'total_plan_selections.x'), .funs = funs(sum)) %>%
     mutate_at( .vars = c('level_1_perc.x', 'level_2_perc.x',
                          'level_3_perc.x','level_4_perc.x','level_5_perc.x', 'level_6_perc.x',
-                         'level_7_perc.x', 'level_8_perc.x'), funs((./total_plan_selections.x)*100)) #%>%
-    #group_by(state_name, income_range) %>%
-    summarize_at(.vars = c('level_1_perc.x', 'level_2_perc.x',
-                           'level_3_perc.x','level_4_perc.x','level_5_perc.x', 'level_6_perc.x',
-                           'level_7_perc.x', 'level_8_perc.x', 'total_plan_selections.x'), .funs = funs(sum))
+                         'level_7_perc.x', 'level_8_perc.x'), funs((./total_plan_selections.x)*100)) 
 
 
 income_plot2 <- ggplot(position = identity)+
@@ -244,15 +229,16 @@ income_plot2 <- ggplot(position = identity)+
              position = 'dodge',  size = 3, alpha = .8, stat = 'identity')+
     labs(title = "Percentage of Health Insurance Plans Selected based on Income Level",
          subtitle = "This plot displays the number of consumers who selected insurance plans through the marketplace and their income range",
-         color = "State Abbreviation", x = 'Income Level', y = 'Percentage of Plans Bought By People at Income Level', caption = 'Source: CMS' )+
+         color = "State Abbreviation", x = 'Income Level', y = 'Percentage of Plans Bought By People at Income Level', caption = 'Source: CMS Health Insurance Public Use Files' )+
     theme(axis.text.x = element_text(angle = 90))
 
 income_plot2
 ```
+<P style="page-break-before: always">
+##Different Age, Different Price
+A well known fact about health insurance is that health insurance companies are allowed to raise premiums for customers as they age.  The curve in the following plots demonstrates nothing particularly exciting regarding that fact.  What is interesting is how platinum plans are either not recorded to be available or are unavailable in Illinois and Indiana or are not offered at all.  Another interesting insight is that premium increases are not exactly the same by state. Silver plans are significantly more expensive for older Americans in Wisconsin than the other three states.
 
-A well known fact about health insurance is that health insurance companeis are allowed to raise premiums for customers as they age.  The curve in the following plots demonstrates nothing particularly exciting regarding that fact.  What is interesting is how platinum plans are either not recorded to be available or are unavailable in Illinois and Indiana or are not offered at all.  Another interesting insight is that premium increases are not exactly the same by state. Silver plans are significantly more expensive for older Americans in Wisconsin than the other three states.
-
-```{r fig.width = 7, fig.height=6}
+```{r fig.width = 7, fig.height=6, echo=FALSE, message=FALSE, warning = FALSE}
 
 individual_option <- rates %>%
     filter(age != 'Family Option' & individualrate < "9000") %>%
@@ -279,19 +265,34 @@ benifits_option <- plan_attributes %>%
 planrates <- inner_join(individual_option, benifits_option, by="planid")
 
 planrates %>%
+    filter(metallevel %in% c('Catostrophic','Gold','Silver','Platinum','Bronze'))%>%
     select(age, metallevel, individualrate, statecode) %>%
     group_by(age, metallevel,statecode) %>%
     summarize(meanindrate= mean(individualrate),
               medianindrate = median(individualrate)) %>%
     arrange(desc(meanindrate))%>%
     ggplot( aes(x=age, y=meanindrate))+
-    geom_point(stat='identity', size = 1.5, aes(color = factor(metallevel)))+
+    geom_point(stat='identity', size = 1.5, aes(color = factor(metallevel, levels = c('Bronze','Silver','Gold','Platinum'))))+
     ggtitle("Average Monthly Premium by Age")+
     labs(subtitle = 'By State in 2016', x="Age", y="Average Premium by Coverage", color = 'Metal Level',
-         caption = 'Source: CMS')+
+          caption = 'Source: CMS Health Insurance Public Use Files')+
     facet_wrap(~statecode)+
-    theme(axis.text.x = element_text(angle = 90, hjust = 1), axis.ticks.x = element_text(size = ))
+    theme(axis.text.x = element_text(angle = 90, hjust = 1, size = 6))
 
+```
+<P style="page-break-before: always">
+##Actuarial Values
+Beyond metal rating for a plan, there are sophisticated measurements insurance companies use to determine the actuarial value of particular plans.  Actuarial values are meant to provide insurance companies and consumers with an idea of how much health care a plan will truly end up covering.  The reason many silver plans have a high actuarial value is likely because of the expected cost sharing payments that health insurance companies could count on.  The new executive order and pressure from Congress could see many of these benefits, and even the plans, disappear. 
+
+```{r fig.width = 7, fig.height=6, echo=FALSE, message=FALSE, warning = FALSE}
+plan_attributes %>%
+    filter(metallevel %in% c('Catostrophic','Gold','Silver','Platinum','Bronze'))%>%
+    mutate(issueractuarialvalue = gsub("%", "", issueractuarialvalue),
+            issueractuarialvalue = as.numeric(issueractuarialvalue)) %>%
+    ggplot()+
+    geom_count(aes( x = statecode, y = issueractuarialvalue, shape = plantype, color = factor(metallevel, levels = c('Bronze','Silver','Gold','Platinum'))), alpha = .5)+
+    ggtitle('Actuarial Value of Plan Level and Type by State')+
+    labs(subtitle = 'Shapes reveal the plan type, and color determines the metal level', y = 'Actuarial Value in Percentage', x = 'State', size = 'Plan Count', shape = 'Plan Type', color = 'Metal Level', caption = 'Source: CMS Health Insurance Public Use Files')
 ```
 
 
